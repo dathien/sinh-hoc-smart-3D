@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+:root {
+  --font-min: 15px;
+  --font-body: 17px;
+  --font-label: 16px;
+  --font-button: 16px;
+  --font-heading: 24px;
+  --font-title: 32px;
+  --font-formula: 20px;
+  --line-height-body: 1.6;
+
+  --color-teal: #0D9488;
+  --color-blue: #2563EB;
+  --color-green: #22C55E;
+  --color-bg: #F8FAFC;
+  --color-card: #FFFFFF;
+  --color-text: #0F172A;
+  --color-text-muted: #475569;
+  --color-border: #E2E8F0;
+  --color-stage: #081414;
+
+  --font-scale: 1;
+}
+
+html.font-scale-standard {
+  --font-scale: 1;
+}
+
+html.font-scale-large {
+  --font-scale: 1.15;
+}
+
+html.font-scale-presentation {
+  --font-scale: 1.32;
+}
+
+html,
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Be Vietnam Pro', 'Plus Jakarta Sans', Arial, sans-serif;
+  font-size: calc(17px * var(--font-scale));
+  line-height: var(--line-height-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Enforce strict minimum 15px across UI elements */
+.text-ui-min {
+  font-size: max(15px, calc(15px * var(--font-scale)));
+}
+
+.text-ui-label {
+  font-size: max(15px, calc(16px * var(--font-scale)));
+}
+
+.text-ui-body {
+  font-size: max(16px, calc(17px * var(--font-scale)));
+}
+
+.text-ui-card-title {
+  font-size: max(18px, calc(19px * var(--font-scale)));
+}
+
+.text-ui-section {
+  font-size: max(20px, calc(22px * var(--font-scale)));
+}
+
+.text-ui-lab {
+  font-size: max(24px, calc(26px * var(--font-scale)));
+}
+
+.text-ui-page {
+  font-size: max(26px, calc(30px * var(--font-scale)));
+}
+
+.text-ui-hero {
+  font-size: max(30px, calc(34px * var(--font-scale)));
+  text-wrap: balance;
+}
+
+.font-mono-tabular {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Presentation mode readability */
+.presentation-active {
+  --font-scale: 1.32;
+}
+
+/* MathLive field styling */
+math-field {
+  font-size: max(20px, calc(22px * var(--font-scale)));
+  min-height: 56px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #CBD5E1;
+  background-color: #FFFFFF;
+  color: #0F172A;
+  width: 100%;
+  display: block;
+  box-sizing: border-box;
+  outline: none;
+}
+
+math-field:focus-within {
+  border-color: #0D9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.18);
+}
+
+/* Formula SVG responsiveness */
+.formula-svg-container svg {
+  max-width: 100%;
+  height: auto;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* A4 Print Worksheet styling */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    font-size: 12pt !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .print-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+}
