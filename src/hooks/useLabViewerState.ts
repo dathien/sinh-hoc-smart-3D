@@ -1,14 +1,16 @@
 import { useCallback, useRef, useState } from 'react';
 import { ModelViewer3DHandle } from '../components/viewer3d/ModelViewer3D';
+import { useSmartLabels } from '../context/SmartLabelContext';
 import { QualityLevel } from '../types/biology';
 
 export function useLabViewerState(defaultPlaying = true) {
   const viewerRef = useRef<ModelViewer3DHandle | null>(null);
+  const { isVisible, toggleQuickVisibility, setMode } = useSmartLabels();
+
   const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
   const [hiddenPartIds, setHiddenPartIds] = useState<string[]>([]);
   const [isolatedPartId, setIsolatedPartId] = useState<string | null>(null);
   const [autoRotate, setAutoRotate] = useState(false);
-  const [showLabels, setShowLabels] = useState(true);
   const [opacityLevel, setOpacityLevel] = useState(1);
   const [clipY, setClipY] = useState(1.1);
   const [clipX, setClipX] = useState(1.1);
@@ -17,6 +19,19 @@ export function useLabViewerState(defaultPlaying = true) {
   const [speed, setSpeed] = useState(1);
   const [quality, setQuality] = useState<QualityLevel>('standard');
   const [simStepOffset, setSimStepOffset] = useState(0);
+
+  const setShowLabels = useCallback(
+    (next: boolean | ((prev: boolean) => boolean)) => {
+      if (typeof next === 'function') {
+        toggleQuickVisibility();
+      } else if (next) {
+        if (!isVisible) toggleQuickVisibility();
+      } else {
+        setMode('hidden');
+      }
+    },
+    [isVisible, toggleQuickVisibility, setMode],
+  );
 
   const toggleHidePart = useCallback((id: string) => {
     setHiddenPartIds((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
@@ -44,7 +59,7 @@ export function useLabViewerState(defaultPlaying = true) {
     setIsolatedPartId,
     autoRotate,
     setAutoRotate,
-    showLabels,
+    showLabels: isVisible,
     setShowLabels,
     opacityLevel,
     setOpacityLevel,

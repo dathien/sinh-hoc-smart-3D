@@ -165,7 +165,6 @@ export const AnimalPhysiologyLab: React.FC = () => {
   const [heartRate, setHeartRate] = useState(72); // bpm
   const [adhLevel, setAdhLevel] = useState(50); // % water reabsorption in collecting duct
   const [synapseStimulus, setSynapseStimulus] = useState(1); // 0 = nghỉ, 1 = xung truyền
-  const [presentation, setPresentation] = useState(false);
 
   const viewer = useLabViewerState(true);
   const animRefs = useRef<{
@@ -500,7 +499,7 @@ export const AnimalPhysiologyLab: React.FC = () => {
   };
 
   return (
-    <div className={presentation ? 'presentation-active' : ''}>
+    <div>
       <div className="mb-4 flex flex-wrap gap-2 bg-white border border-slate-200 rounded-xl p-3">
         {[
           { id: 'circulation' as AnimalSysMode, label: 'Tuần hoàn kép' },
@@ -563,8 +562,6 @@ export const AnimalPhysiologyLab: React.FC = () => {
         onChangeSpeed={viewer.setSpeed}
         quality={viewer.quality}
         onChangeQuality={viewer.setQuality}
-        isPresentation={presentation}
-        onTogglePresentation={() => setPresentation((v) => !v)}
         teacherGuideNote="Nhấn mạnh sự đổi màu hồng cầu (xanh → đỏ tại phổi; đỏ → xanh tại mô cơ quan) để học sinh hiểu đúng vai trò hai vòng tuần hoàn."
         sourceMeta={sourceMeta}
         stageContent={

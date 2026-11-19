@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as $3Dmol from '3dmol';
 import { Camera, RefreshCw, RotateCw, Search, WifiOff } from 'lucide-react';
+import { AnnotationSettingsPanel } from '../../components/viewer3d/smartLabels/AnnotationSettingsPanel';
+import { useSmartLabels } from '../../context/SmartLabelContext';
 
 type MolStyle = 'cartoon' | 'stick' | 'ballstick' | 'sphere' | 'surface';
 type ColorScheme = 'chain' | 'element' | 'residue' | 'ss' | 'spectrum' | 'plddt';
@@ -91,6 +93,7 @@ const CURATED_MOLECULES: CuratedMolecule[] = [
 export const MolecularViewerLab: React.FC = () => {
   const viewerMountRef = useRef<HTMLDivElement | null>(null);
   const viewerInstanceRef = useRef<$3Dmol.GLViewer | null>(null);
+  const { settings: labelSettings, effectiveFontSize } = useSmartLabels();
 
   const [selectedMol, setSelectedMol] = useState<CuratedMolecule>(CURATED_MOLECULES[0]);
   const [lookupInput, setLookupInput] = useState('1BNA');
@@ -173,8 +176,20 @@ export const MolecularViewerLab: React.FC = () => {
       antialias: true,
     });
     viewerInstanceRef.current = v;
-    loadPdbDataIntoViewer(OFFLINE_1BNA_PDB, 'pdb', 'Đã nạp mẫu ngoại tuyến 1BNA (B-DNA). Nhấn "Tải từ máy chủ" để xem trọn vẹn chuỗi.');
+    loadPdbDataIntoViewer(OFFLINE_1BNA_PDB, 'pdb', 'Đã nạp mẫu ngoại tuyến 1BNA (B-DNA). Nhấn "Tra cứu & Mở" để tải trọn vẹn chuỗi.');
+
+    const ro = new ResizeObserver(() => {
+      try {
+        v.resize();
+        v.render();
+      } catch {
+        // ignore resize timing errors during unmount
+      }
+    });
+    ro.observe(el);
+
     return () => {
+      ro.disconnect();
       try {
         v.spin(false);
         v.clear();
@@ -315,10 +330,56 @@ export const MolecularViewerLab: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         <div className="lg:col-span-8 space-y-3">
-          <div
-            ref={viewerMountRef}
-            className="relative w-full h-[520px] md:h-[600px] rounded-xl overflow-hidden border border-slate-200 bg-[#081414]"
-          />
+          <div className="rounded-xl overflow-hidden border border-slate-200 bg-[#081414]">
+            <div
+              ref={viewerMountRef}
+              className="relative w-full h-[460px] md:h-[540px] bg-[#081414]"
+            />
+
+            {/* Smart Molecular Annotation Legend (strictly outside 3D canvas, respects SmartLabel settings) */}
+            {labelSettings.mode !== 'hidden' && (
+              <div
+                className="bg-[#0B1B1B] border-t border-slate-700/90 px-4 py-3 space-y-2 text-slate-100"
+                style={{ fontSize: `${Math.max(effectiveFontSize, 15)}px`, lineHeight: 1.4 }}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-bold text-teal-200">
+                    Chú giải màu sắc cấu trúc phân tử ({selectedMol.id})
+                  </span>
+                  <span className="text-slate-300">
+                    Nhấp trực tiếp vào nguyên tử để xem chi tiết
+                  </span>
+                </div>
+
+                {labelSettings.mode === 'selected-only' ? (
+                  <div className="text-slate-200">
+                    {pickedInfo ?? 'Chưa chọn nguyên tử nào. Hãy nhấp vào một vị trí trên mô hình 3D.'}
+                  </div>
+                ) : colorScheme === 'plddt' ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-[#0053D6] shrink-0" /><span>Rất cao (pLDDT ≥ 90)</span></div>
+                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-[#65CBF3] shrink-0" /><span>Tin cậy (70 ≤ pLDDT &lt; 90)</span></div>
+                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-[#FFDB13] shrink-0" /><span>Thấp (50 ≤ pLDDT &lt; 70)</span></div>
+                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-[#FF7D45] shrink-0" /><span>Rất thấp (pLDDT &lt; 50)</span></div>
+                  </div>
+                ) : colorScheme === 'ss' ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-[#FF0080] shrink-0" /><span>Xoắn α (Alpha-helix)</span></div>
+                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-[#FFC800] shrink-0" /><span>Phiến gấp β (Beta-sheet)</span></div>
+                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-[#94A3B8] shrink-0" /><span>Vòng cuộn ngẫu nhiên (Coil)</span></div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-[#909090] shrink-0" /><span>Carbon (C)</span></div>
+                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-[#3050F8] shrink-0" /><span>Nitrogen (N)</span></div>
+                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-[#FF0D0D] shrink-0" /><span>Oxygen (O)</span></div>
+                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-[#FF8000] shrink-0" /><span>Phosphorus (P)</span></div>
+                    <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-full bg-[#22C55E] shrink-0" /><span>Phối tử / Heme</span></div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -412,6 +473,8 @@ export const MolecularViewerLab: React.FC = () => {
               Xuất ảnh PNG phân tử
             </button>
           </div>
+
+          <AnnotationSettingsPanel />
 
           <div className="pt-3 border-t border-slate-200 space-y-2">
             <h4 className="font-bold text-slate-900 text-ui-label">

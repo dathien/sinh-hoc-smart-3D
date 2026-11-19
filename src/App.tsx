@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { AppLayout } from './components/layout/AppLayout';
+import { GlobalSmartLabelProvider } from './context/SmartLabelContext';
 import { LAB_DEFINITIONS } from './data/labsMeta';
 import { CurriculumGradePage } from './pages/CurriculumGradePage';
 import { FormulaAndDiagramPage } from './pages/FormulaAndDiagramPage';
@@ -91,56 +92,61 @@ export default function App() {
       : undefined;
 
   return (
-    <AppLayout
-      currentPage={nav.page}
-      breadcrumbLabel={breadcrumbLabel}
-      canGoBack={history.length > 0}
-      onBack={handleBack}
-      onNavigate={handleNavigatePage}
-      fontScale={fontScale}
-      onChangeFontScale={setFontScale}
+    <GlobalSmartLabelProvider
       isPresentation={isPresentation}
-      onTogglePresentation={() => setIsPresentation((v) => !v)}
+      onChangePresentation={setIsPresentation}
     >
-      <ErrorBoundary>
-        {nav.page === 'home' && (
-          <HomePage
-            onNavigatePage={handleNavigatePage}
-            onOpenLab={handleOpenLab}
-            onOpenLesson={handleOpenLesson}
-          />
-        )}
+      <AppLayout
+        currentPage={nav.page}
+        breadcrumbLabel={breadcrumbLabel}
+        canGoBack={history.length > 0}
+        onBack={handleBack}
+        onNavigate={handleNavigatePage}
+        fontScale={fontScale}
+        onChangeFontScale={setFontScale}
+        isPresentation={isPresentation}
+        onTogglePresentation={() => setIsPresentation((v) => !v)}
+      >
+        <ErrorBoundary>
+          {nav.page === 'home' && (
+            <HomePage
+              onNavigatePage={handleNavigatePage}
+              onOpenLab={handleOpenLab}
+              onOpenLesson={handleOpenLesson}
+            />
+          )}
 
-        {(nav.page === 'grade10' || nav.page === 'grade11' || nav.page === 'grade12') && (
-          <CurriculumGradePage
-            grade={nav.page === 'grade10' ? 10 : nav.page === 'grade11' ? 11 : 12}
-            selectedLessonId={nav.lessonId}
-            onSelectLesson={(lessonId) => setNav((s) => ({ ...s, lessonId }))}
-            onOpenLab={handleOpenLab}
-          />
-        )}
+          {(nav.page === 'grade10' || nav.page === 'grade11' || nav.page === 'grade12') && (
+            <CurriculumGradePage
+              grade={nav.page === 'grade10' ? 10 : nav.page === 'grade11' ? 11 : 12}
+              selectedLessonId={nav.lessonId}
+              onSelectLesson={(lessonId) => setNav((s) => ({ ...s, lessonId }))}
+              onOpenLab={handleOpenLab}
+            />
+          )}
 
-        {nav.page === 'labs' && (
-          <LabsHubPage
-            activeLabId={nav.labId}
-            onSelectLab={(labId) => setNav((s) => ({ ...s, labId }))}
-          />
-        )}
+          {nav.page === 'labs' && (
+            <LabsHubPage
+              activeLabId={nav.labId}
+              onSelectLab={(labId) => setNav((s) => ({ ...s, labId }))}
+            />
+          )}
 
-        {nav.page === 'models' && <ModelLibraryPage onOpenLab={handleOpenLab} />}
+          {nav.page === 'models' && <ModelLibraryPage onOpenLab={handleOpenLab} />}
 
-        {(nav.page === 'formulas' || nav.page === 'diagrams') && (
-          <FormulaAndDiagramPage
-            initialTab={nav.page === 'diagrams' ? 'diagrams' : 'formulas'}
-          />
-        )}
+          {(nav.page === 'formulas' || nav.page === 'diagrams') && (
+            <FormulaAndDiagramPage
+              initialTab={nav.page === 'diagrams' ? 'diagrams' : 'formulas'}
+            />
+          )}
 
-        {nav.page === 'guide' && (
-          <GuidePage onOpenLab={handleOpenLab} onNavigatePage={handleNavigatePage} />
-        )}
+          {nav.page === 'guide' && (
+            <GuidePage onOpenLab={handleOpenLab} onNavigatePage={handleNavigatePage} />
+          )}
 
-        {nav.page === 'offline' && <OfflinePage />}
-      </ErrorBoundary>
-    </AppLayout>
+          {nav.page === 'offline' && <OfflinePage />}
+        </ErrorBoundary>
+      </AppLayout>
+    </GlobalSmartLabelProvider>
   );
 }

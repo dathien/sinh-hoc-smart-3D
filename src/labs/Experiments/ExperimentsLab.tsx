@@ -141,7 +141,6 @@ export const ExperimentsLab: React.FC = () => {
   const [stepFeedback, setStepFeedback] = useState<string | null>(null);
   const [enzymeTemp, setEnzymeTemp] = useState(37);
   const [enzymePh, setEnzymePh] = useState(7);
-  const [presentation, setPresentation] = useState(false);
 
   const viewer = useLabViewerState(true);
   const spec = EXPERIMENTS[expId];
@@ -308,7 +307,7 @@ export const ExperimentsLab: React.FC = () => {
   };
 
   return (
-    <div className={presentation ? 'presentation-active' : ''}>
+    <div>
       <div className="mb-4 flex flex-wrap gap-2 bg-white border border-slate-200 rounded-xl p-3">
         {(Object.keys(EXPERIMENTS) as ExperimentId[]).map((id) => (
           <button
@@ -350,8 +349,6 @@ export const ExperimentsLab: React.FC = () => {
         supportsSimulation={false}
         quality={viewer.quality}
         onChangeQuality={viewer.setQuality}
-        isPresentation={presentation}
-        onTogglePresentation={() => setPresentation((v) => !v)}
         teacherGuideNote="Nếu học sinh bấm nhầm bước (ví dụ nhỏ thuốc thử trước khi lấy mẫu hoặc quên đun nóng với Benedict), hệ thống sẽ nhắc nhở đúng trình tự thực hành."
         sourceMeta={sourceMeta}
         stageContent={

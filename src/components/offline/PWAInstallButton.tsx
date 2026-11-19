@@ -21,17 +21,23 @@ export const PWAInstallButton: React.FC = () => {
             setShowGuide(true);
           }
         }}
-        className="min-h-[44px] px-3.5 py-2 rounded-lg border border-teal-600 bg-teal-50 text-teal-900 hover:bg-teal-100 inline-flex items-center gap-2 font-semibold text-ui-min transition-colors"
+        className="min-h-[42px] md:min-h-[44px] px-3 py-1.5 rounded-lg border border-teal-600 bg-teal-50 text-teal-900 hover:bg-teal-100 inline-flex items-center gap-1.5 font-semibold text-ui-min transition-colors shrink-0 cursor-pointer"
       >
-        <Download className="w-4 h-4 text-teal-700" />
-        Cài đặt ứng dụng
+        <Download className="w-4 h-4 text-teal-700 shrink-0" />
+        <span>Cài đặt ứng dụng</span>
       </button>
 
       {showGuide && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 flex items-center justify-center p-4">
-          <div className="max-w-lg w-full bg-white rounded-2xl p-6 space-y-4 shadow-xl border border-slate-200">
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/60 flex items-center justify-center p-4"
+          onClick={() => setShowGuide(false)}
+        >
+          <div
+            className="max-w-lg w-full bg-white rounded-2xl p-6 space-y-4 shadow-xl border border-slate-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-2.5 text-teal-800">
-              <Smartphone className="w-6 h-6" />
+              <Smartphone className="w-6 h-6 shrink-0" />
               <h3 className="font-bold text-ui-card-title">Hướng dẫn cài đặt SINH HỌC SMART 3D</h3>
             </div>
             <div className="space-y-2.5 text-slate-700 text-ui-body">
@@ -49,7 +55,7 @@ export const PWAInstallButton: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowGuide(false)}
-                className="min-h-[44px] px-5 py-2 rounded-lg bg-teal-700 text-white font-semibold text-ui-min"
+                className="min-h-[44px] px-5 py-2 rounded-lg bg-teal-700 text-white hover:bg-teal-800 font-semibold text-ui-min"
               >
                 Đã hiểu
               </button>

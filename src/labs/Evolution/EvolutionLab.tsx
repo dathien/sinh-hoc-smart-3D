@@ -101,7 +101,6 @@ export const EvolutionLab: React.FC = () => {
   const [seed, setSeed] = useState(2026);
   const [activeGenIndex, setActiveGenIndex] = useState(0);
   const [compareSnapshot, setCompareSnapshot] = useState<{ label: string; data: ReturnType<typeof runEvolutionSeries> } | null>(null);
-  const [presentation, setPresentation] = useState(false);
 
   const viewer = useLabViewerState(true);
   const swarmRefs = useRef<THREE.Mesh[]>([]);
@@ -219,7 +218,7 @@ export const EvolutionLab: React.FC = () => {
   };
 
   return (
-    <div className={presentation ? 'presentation-active' : ''}>
+    <div>
       <div className="mb-4 flex flex-wrap gap-2 bg-white border border-slate-200 rounded-xl p-3">
         {(Object.keys(MECHANISM_LABELS) as EvolutionMechanism[]).map((m) => (
           <button
@@ -270,8 +269,6 @@ export const EvolutionLab: React.FC = () => {
         onChangeSpeed={viewer.setSpeed}
         quality={viewer.quality}
         onChangeQuality={viewer.setQuality}
-        isPresentation={presentation}
-        onTogglePresentation={() => setPresentation((v) => !v)}
         teacherGuideNote="Lưu ý học sinh: Sinh vật không 'chủ động biến đổi để thích nghi'. Đột biến phát sinh ngẫu nhiên; môi trường đóng vai trò sàng lọc giữ lại kiểu hình thích nghi hơn."
         sourceMeta={sourceMeta}
         stageContent={

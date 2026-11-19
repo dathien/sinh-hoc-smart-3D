@@ -18,8 +18,10 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
+import { useSmartLabels } from '../../context/SmartLabelContext';
 import { ModelPartInfo, QualityLevel, ScientificSourceMeta } from '../../types/biology';
 import { CameraPreset, ModelViewer3DHandle } from './ModelViewer3D';
+import { AnnotationSettingsPanel } from './smartLabels/AnnotationSettingsPanel';
 
 export type LabControlTab = 'observe' | 'parts' | 'simulate' | 'knowledge' | 'practice';
 
@@ -103,9 +105,13 @@ export const LabWorkspaceLayout: React.FC<LabWorkspaceLayoutProps> = ({
   practiceContent,
   teacherGuideNote,
   sourceMeta,
-  isPresentation = false,
-  onTogglePresentation,
+  isPresentation: isPresentationProp,
+  onTogglePresentation: onTogglePresentationProp,
 }) => {
+  const smartLabels = useSmartLabels();
+  const isPresentation = isPresentationProp ?? smartLabels.isPresentation;
+  const handleTogglePresentation = onTogglePresentationProp ?? smartLabels.togglePresentation;
+
   const [activeTab, setActiveTab] = useState<LabControlTab>('observe');
   const [showControls, setShowControls] = useState(true);
   const [showTeacherNote, setShowTeacherNote] = useState(true);
@@ -150,16 +156,14 @@ export const LabWorkspaceLayout: React.FC<LabWorkspaceLayoutProps> = ({
             <SlidersHorizontal className="w-4 h-4" />
             {showControls ? 'Ẩn bảng điều khiển' : 'Hiện bảng điều khiển'}
           </button>
-          {onTogglePresentation && (
-            <button
-              type="button"
-              onClick={onTogglePresentation}
-              className="min-h-[44px] px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 inline-flex items-center gap-2 text-ui-min font-semibold"
-            >
-              {isPresentation ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-              {isPresentation ? 'Thoát trình chiếu' : 'Trình chiếu lớp học'}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleTogglePresentation}
+            className="min-h-[44px] px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 inline-flex items-center gap-2 text-ui-min font-semibold"
+          >
+            {isPresentation ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            {isPresentation ? 'Thoát trình chiếu' : 'Trình chiếu lớp học'}
+          </button>
         </div>
       </div>
 
@@ -170,10 +174,16 @@ export const LabWorkspaceLayout: React.FC<LabWorkspaceLayoutProps> = ({
         </div>
       )}
 
-      {/* Desktop 68% Stage / 32% Controls; Mobile stacked */}
+      {/* Desktop Stage & Controls; expands cleanly in Presentation Mode */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         <div className={showControls ? 'lg:col-span-8 space-y-3' : 'lg:col-span-12 space-y-3'}>
-          <div className="h-[460px] md:h-[580px] lg:h-[640px] w-full rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+          <div
+            className={`w-full rounded-xl overflow-hidden border border-slate-200 shadow-sm ${
+              isPresentation
+                ? 'h-[540px] md:h-[660px] lg:h-[740px]'
+                : 'h-[480px] md:h-[600px] lg:h-[650px]'
+            }`}
+          >
             {stageContent}
           </div>
 
@@ -382,6 +392,9 @@ export const LabWorkspaceLayout: React.FC<LabWorkspaceLayoutProps> = ({
                     {showLabels ? 'Ẩn chú thích' : 'Hiện chú thích'}
                   </button>
                 </div>
+
+                {/* Smart Annotation Settings (4 modes, font size 15-30px, leader lines) */}
+                <AnnotationSettingsPanel />
 
                 {/* Sectioning & Transparency */}
                 <div className="space-y-3 pt-2 border-t border-slate-200">

@@ -134,7 +134,6 @@ export const PlantPhysiologyLab: React.FC = () => {
   const [temperature, setTemperature] = useState(28); // °C
   const [humidity, setHumidity] = useState(65); // %
   const [camTime, setCamTime] = useState<'day' | 'night'>('night');
-  const [presentation, setPresentation] = useState(false);
 
   const viewer = useLabViewerState(true);
   const animRefs = useRef<{
@@ -453,7 +452,7 @@ export const PlantPhysiologyLab: React.FC = () => {
   };
 
   return (
-    <div className={presentation ? 'presentation-active' : ''}>
+    <div>
       {/* Mode selector */}
       <div className="mb-4 flex flex-wrap gap-2 bg-white border border-slate-200 rounded-xl p-3">
         {[
@@ -516,8 +515,6 @@ export const PlantPhysiologyLab: React.FC = () => {
         onChangeSpeed={viewer.setSpeed}
         quality={viewer.quality}
         onChangeQuality={viewer.setQuality}
-        isPresentation={presentation}
-        onTogglePresentation={() => setPresentation((v) => !v)}
         teacherGuideNote="Cho học sinh giảm độ ẩm không khí xuống dưới 30% hoặc chuyển giữa C4 (tách không gian: mô giậu – bao bó mạch) và CAM (tách thời gian: ban đêm – ban ngày) để so sánh độ mở khí khổng và tốc độ quang hợp."
         sourceMeta={sourceMeta}
         stageContent={

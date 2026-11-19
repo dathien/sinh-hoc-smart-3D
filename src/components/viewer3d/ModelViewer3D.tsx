@@ -2,7 +2,10 @@ import React, { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { useSmartLabels } from '../../context/SmartLabelContext';
 import { ModelPartInfo, QualityLevel } from '../../types/biology';
+import { AnchorPoint2D } from './smartLabels/labelLayoutEngine';
+import { SmartLabelLayer } from './smartLabels/SmartLabelLayer';
 
 export type CameraPreset = 'initial' | 'front' | 'back' | 'left' | 'right' | 'top' | 'bottom' | 'fit';
 
@@ -53,6 +56,8 @@ interface ModelViewer3DProps {
 
 // Reusable vectors at module scope to prevent GC churn in render loop
 const _box = new THREE.Box3();
+const _partBox = new THREE.Box3();
+const _corner = new THREE.Vector3();
 const _center = new THREE.Vector3();
 const _size = new THREE.Vector3();
 const _targetCamPos = new THREE.Vector3();
@@ -105,9 +110,9 @@ export const ModelViewer3D = React.forwardRef<ModelViewer3DHandle, ModelViewer3D
   ) => {
     const mountRef = useRef<HTMLDivElement | null>(null);
     const [webglSupported, setWebglSupported] = useState(true);
-    const [projectedLabels, setProjectedLabels] = useState<
-      { id: string; name: string; x: number; y: number; visible: boolean }[]
-    >([]);
+    const [projectedAnchors, setProjectedAnchors] = useState<AnchorPoint2D[]>([]);
+    const lastAnchorsRef = useRef<AnchorPoint2D[]>([]);
+    const { settings: smartLabelSettings } = useSmartLabels();
 
     // Mutable refs read inside animation loop without recreating WebGLRenderer
     const stateRef = useRef({
@@ -123,6 +128,7 @@ export const ModelViewer3D = React.forwardRef<ModelViewer3DHandle, ModelViewer3D
       clipX,
       explodeFactor,
       showLabels,
+      annotationMode: smartLabelSettings.mode,
       parts,
       onAnimateFrame,
       onSelectPart,
@@ -140,6 +146,7 @@ export const ModelViewer3D = React.forwardRef<ModelViewer3DHandle, ModelViewer3D
       clipX,
       explodeFactor,
       showLabels,
+      annotationMode: smartLabelSettings.mode,
       parts,
       onAnimateFrame,
       onSelectPart,
@@ -170,7 +177,8 @@ export const ModelViewer3D = React.forwardRef<ModelViewer3DHandle, ModelViewer3D
       _box.getSize(_size);
       const maxDim = Math.max(_size.x, _size.y, _size.z, 1);
       const fovRad = THREE.MathUtils.degToRad(ctx.camera.fov);
-      const dist = (maxDim / (2 * Math.tan(fovRad / 2))) * 1.45;
+      const aspectFactor = ctx.camera.aspect < 1 ? 1 / Math.max(ctx.camera.aspect, 0.55) : 1;
+      const dist = (maxDim / (2 * Math.tan(fovRad / 2))) * 1.48 * aspectFactor;
 
       ctx.bounds.center.copy(_center);
       ctx.bounds.radius = maxDim * 0.6;
@@ -550,11 +558,15 @@ export const ModelViewer3D = React.forwardRef<ModelViewer3DHandle, ModelViewer3D
               p = p.parent;
             }
             const isSelected = Boolean(ownPartId && st.selectedPartId === ownPartId);
+            const dimUnselected =
+              st.annotationMode === 'selected-only' &&
+              st.selectedPartId !== null &&
+              !isSelected;
             const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
             mats.forEach((m) => {
               if (!m) return;
               const baseOp = (m.userData.baseOpacity as number | undefined) ?? 1;
-              const targetOpacity = baseOp * st.opacityLevel;
+              const targetOpacity = baseOp * st.opacityLevel * (dimUnselected ? 0.32 : 1);
               const needsTransparent = targetOpacity < 0.99 || Boolean(m.userData.baseTransparent);
               if (m.transparent !== needsTransparent) {
                 m.transparent = needsTransparent;
@@ -590,35 +602,114 @@ export const ModelViewer3D = React.forwardRef<ModelViewer3DHandle, ModelViewer3D
 
         renderer.render(scene, camera);
 
-        // Project 3D part labels at ~15fps when enabled
-        if (st.showLabels && st.parts.length > 0 && elapsed - lastLabelSync > 0.07) {
+        // Project 3D part anchors synchronized with transforms, visibility & clipping planes
+        const shouldProject =
+          st.showLabels && st.annotationMode !== 'hidden' && st.parts.length > 0;
+        if (shouldProject && elapsed - lastLabelSync > 0.045) {
           lastLabelSync = elapsed;
           const cw = renderer.domElement.clientWidth;
           const ch = renderer.domElement.clientHeight;
-          const nextLabels: { id: string; name: string; x: number; y: number; visible: boolean }[] = [];
-          const partMap = new Map<string, THREE.Object3D>();
-          rootGroup.traverse((o) => {
-            if (o.userData?.partId && !partMap.has(o.userData.partId)) {
-              partMap.set(o.userData.partId, o);
+          if (cw > 20 && ch > 20) {
+            // Collect all visible Object3Ds per partId for accurate world bounding box
+            const partObjects = new Map<string, THREE.Object3D[]>();
+            rootGroup.traverse((o) => {
+              const pid = o.userData?.partId as string | undefined;
+              if (pid && o.visible) {
+                const arr = partObjects.get(pid);
+                if (arr) arr.push(o);
+                else partObjects.set(pid, [o]);
+              }
+            });
+
+            const nextAnchors: AnchorPoint2D[] = [];
+            for (let idx = 0; idx < st.parts.length; idx++) {
+              const part = st.parts[idx];
+              const objs = partObjects.get(part.id);
+              if (!objs || objs.length === 0) continue;
+
+              _box.makeEmpty();
+              for (const o of objs) {
+                _partBox.setFromObject(o);
+                if (!_partBox.isEmpty()) {
+                  _box.union(_partBox);
+                }
+              }
+              if (_box.isEmpty()) continue;
+
+              // Clipping-plane visibility test across all 8 bounding-box corners
+              const min = _box.min;
+              const max = _box.max;
+              let visibleCornerCount = 0;
+              for (let cx = 0; cx < 2; cx++) {
+                for (let cy = 0; cy < 2; cy++) {
+                  for (let cz = 0; cz < 2; cz++) {
+                    _corner.set(cx ? max.x : min.x, cy ? max.y : min.y, cz ? max.z : min.z);
+                    if (
+                      clipPlaneY.distanceToPoint(_corner) >= -0.001 &&
+                      clipPlaneX.distanceToPoint(_corner) >= -0.001
+                    ) {
+                      visibleCornerCount++;
+                    }
+                  }
+                }
+              }
+              if (visibleCornerCount === 0) continue;
+
+              _box.getCenter(_projVec);
+              // Clamp anchor onto visible side when partially clipped
+              if (clipPlaneY.distanceToPoint(_projVec) < 0) {
+                _projVec.y = Math.min(_projVec.y, clipPlaneY.constant - 0.04);
+              }
+              if (clipPlaneX.distanceToPoint(_projVec) < 0) {
+                _projVec.x = Math.min(_projVec.x, clipPlaneX.constant - 0.04);
+              }
+
+              _projVec.project(camera);
+              const inFront = _projVec.z >= -1 && _projVec.z <= 1;
+              const rawX = ((_projVec.x + 1) / 2) * cw;
+              const rawY = ((-_projVec.y + 1) / 2) * ch;
+              if (inFront && rawX >= -24 && rawX <= cw + 24 && rawY >= -24 && rawY <= ch + 24) {
+                nextAnchors.push({
+                  id: part.id,
+                  numberIndex: idx + 1,
+                  name: part.vietnameseName,
+                  scientificName: part.scientificName,
+                  colorHex: part.colorHex,
+                  canvasX: Math.max(8, Math.min(cw - 8, rawX)),
+                  canvasY: Math.max(8, Math.min(ch - 8, rawY)),
+                  depth: _projVec.z,
+                  priority: st.selectedPartId === part.id ? 100 : 10,
+                  isSelected: st.selectedPartId === part.id,
+                });
+              }
             }
-          });
-          for (const part of st.parts) {
-            const obj = partMap.get(part.id);
-            if (!obj || !obj.visible) continue;
-            _box.setFromObject(obj);
-            if (_box.isEmpty()) continue;
-            _box.getCenter(_projVec);
-            _projVec.project(camera);
-            const inFront = _projVec.z >= -1 && _projVec.z <= 1;
-            const x = ((_projVec.x + 1) / 2) * cw;
-            const y = ((-_projVec.y + 1) / 2) * ch;
-            if (inFront && x > 24 && x < cw - 24 && y > 24 && y < ch - 24) {
-              nextLabels.push({ id: part.id, name: part.vietnameseName, x, y, visible: true });
+
+            // Avoid React state churn when anchor coordinates have not moved meaningfully
+            const prev = lastAnchorsRef.current;
+            let changed = prev.length !== nextAnchors.length;
+            if (!changed) {
+              for (let i = 0; i < nextAnchors.length; i++) {
+                const a = prev[i];
+                const b = nextAnchors[i];
+                if (
+                  a.id !== b.id ||
+                  a.isSelected !== b.isSelected ||
+                  Math.abs(a.canvasX - b.canvasX) >= 0.75 ||
+                  Math.abs(a.canvasY - b.canvasY) >= 0.75
+                ) {
+                  changed = true;
+                  break;
+                }
+              }
+            }
+            if (changed) {
+              lastAnchorsRef.current = nextAnchors;
+              setProjectedAnchors(nextAnchors);
             }
           }
-          setProjectedLabels(nextLabels);
-        } else if (!st.showLabels) {
-          setProjectedLabels((prev) => (prev.length ? [] : prev));
+        } else if (!shouldProject && lastAnchorsRef.current.length > 0) {
+          lastAnchorsRef.current = [];
+          setProjectedAnchors([]);
         }
 
         if (isSoftwareGl) {
@@ -683,37 +774,19 @@ export const ModelViewer3D = React.forwardRef<ModelViewer3DHandle, ModelViewer3D
 
     return (
       <div className="relative w-full h-full min-h-[380px] bg-[#081414] rounded-xl overflow-hidden select-none">
-        <div ref={mountRef} className="w-full h-full" />
-
-        {/* Projected Interactive 3D Labels (min 15px font) */}
-        {showLabels &&
-          projectedLabels.map((lbl) => {
-            const isSel = selectedPartId === lbl.id;
-            return (
-              <button
-                key={lbl.id}
-                type="button"
-                onClick={() => onSelectPart?.(lbl.id)}
-                style={{
-                  left: `${lbl.x}px`,
-                  top: `${lbl.y}px`,
-                  transform: 'translate(-50%, -50%)',
-                }}
-                className={`absolute z-10 px-2.5 py-1 rounded-md font-medium whitespace-nowrap transition-colors text-ui-min shadow-md ${
-                  isSel
-                    ? 'bg-teal-600 text-white border border-teal-300'
-                    : 'bg-slate-900/90 text-slate-100 border border-slate-600 hover:bg-teal-700'
-                }`}
-              >
-                {lbl.name}
-              </button>
-            );
-          })}
-
-        {/* Subtle bottom-left interaction instruction */}
-        <div className="pointer-events-none absolute bottom-3 left-3 z-10 px-3 py-1.5 rounded-lg bg-slate-950/85 border border-slate-700/80 text-slate-200 text-ui-min">
-          Kéo chuột để xoay · Cuộn để phóng to/thu nhỏ · Nhấp vào bộ phận để tìm hiểu
-        </div>
+        <SmartLabelLayer
+          enabled={showLabels && parts.length > 0}
+          anchors={projectedAnchors}
+          parts={parts}
+          selectedPartId={selectedPartId}
+          onSelectPart={onSelectPart}
+        >
+          <div ref={mountRef} className="w-full h-full" />
+          {/* Subtle bottom-left interaction instruction inside center 3D canvas */}
+          <div className="pointer-events-none absolute bottom-2.5 left-2.5 right-2.5 sm:right-auto z-10 px-3 py-1 rounded-lg bg-slate-950/80 border border-slate-700/75 text-slate-200 text-ui-min leading-snug">
+            Kéo xoay · Cuộn phóng to/thu nhỏ · Nhấp bộ phận để xem
+          </div>
+        </SmartLabelLayer>
       </div>
     );
   },

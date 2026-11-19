@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft, ChevronRight, Home } from 'lucide-react';
 import { AppPage, FontScaleMode } from '../../types/biology';
-import { MainNavigation } from './MainNavigation';
+import { AppHeader } from './AppHeader';
 
 interface AppLayoutProps {
   currentPage: AppPage;
@@ -42,8 +42,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   children,
 }) => {
   return (
-    <div className={`min-h-screen flex flex-col bg-[#F8FAFC] text-[#0F172A] ${isPresentation ? 'presentation-active' : ''}`}>
-      <MainNavigation
+    <div
+      className={`min-h-screen flex flex-col bg-[#F8FAFC] text-[#0F172A] ${
+        isPresentation ? 'presentation-active' : ''
+      }`}
+    >
+      <AppHeader
         currentPage={currentPage}
         onNavigate={onNavigate}
         fontScale={fontScale}
@@ -52,13 +56,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         onTogglePresentation={onTogglePresentation}
       />
 
-      {currentPage !== 'home' && (
-        <div className="max-w-[1440px] w-full mx-auto px-4 pt-4 flex flex-wrap items-center justify-between gap-3 no-print">
-          <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-slate-600 text-ui-min">
+      {currentPage !== 'home' && !isPresentation && (
+        <div className="max-w-[1440px] w-full mx-auto px-4 pt-3 flex flex-wrap items-center justify-between gap-3 no-print">
+          <nav
+            aria-label="Breadcrumb"
+            className="flex flex-wrap items-center gap-2 text-slate-600 text-ui-min"
+          >
             <button
               type="button"
               onClick={() => onNavigate('home')}
-              className="min-h-[44px] inline-flex items-center gap-1 hover:text-teal-700 font-medium"
+              className="min-h-[44px] inline-flex items-center gap-1 hover:text-teal-700 font-medium cursor-pointer"
             >
               <Home className="w-4 h-4" /> Trang chủ
             </button>
@@ -76,7 +83,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             <button
               type="button"
               onClick={onBack}
-              className="min-h-[44px] px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-medium inline-flex items-center gap-1.5 text-ui-min"
+              className="min-h-[44px] px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-medium inline-flex items-center gap-1.5 text-ui-min cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" /> Quay lại trang trước
             </button>
@@ -84,7 +91,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         </div>
       )}
 
-      <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 py-6">
+      <main
+        className={`flex-1 max-w-[1440px] w-full mx-auto px-4 ${
+          isPresentation ? 'py-3' : 'py-5'
+        }`}
+      >
         {children}
       </main>
 

@@ -95,7 +95,6 @@ export const EcologyLab: React.FC = () => {
   const [growthR, setGrowthR] = useState(0.45);
   const [preyInit, setPreyInit] = useState(120);
   const [predInit, setPredInit] = useState(25);
-  const [presentation, setPresentation] = useState(false);
 
   const viewer = useLabViewerState(true);
   const floatRefs = useRef<THREE.Mesh[]>([]);
@@ -245,7 +244,7 @@ export const EcologyLab: React.FC = () => {
   };
 
   return (
-    <div className={presentation ? 'presentation-active' : ''}>
+    <div>
       <div className="mb-4 flex flex-wrap gap-2 bg-white border border-slate-200 rounded-xl p-3">
         {(Object.keys(ECOSYSTEMS) as EcosystemId[]).map((id) => (
           <button
@@ -301,8 +300,6 @@ export const EcologyLab: React.FC = () => {
         onChangeSpeed={viewer.setSpeed}
         quality={viewer.quality}
         onChangeQuality={viewer.setQuality}
-        isPresentation={presentation}
-        onTogglePresentation={() => setPresentation((v) => !v)}
         teacherGuideNote="Nhấn mạnh chiều mũi tên trong chuỗi thức ăn luôn chỉ hướng truyền năng lượng (từ sinh vật bị ăn sang sinh vật ăn) và hiệu suất sinh thái chỉ đạt khoảng 10% qua mỗi bậc."
         sourceMeta={sourceMeta}
         stageContent={
