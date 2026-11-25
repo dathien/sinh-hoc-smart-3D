@@ -16,11 +16,13 @@ import { LabsHubPage } from './pages/LabsHubPage';
 import { ModelLibraryPage } from './pages/ModelLibraryPage';
 import { OfflinePage } from './pages/OfflinePage';
 import { AppPage, FontScaleMode, GradeLevel, LabId } from './types/biology';
+import { RespirationSimId } from './data/respiration/respirationTypes';
 
 interface NavState {
   page: AppPage;
   labId: LabId;
   lessonId: string | null;
+  respirationSimId?: RespirationSimId;
 }
 
 const FONT_SCALE_KEY = 'sinh_hoc_smart_3d_font_scale';
@@ -70,8 +72,8 @@ export default function App() {
     pushNav({ ...nav, page, lessonId: null });
   };
 
-  const handleOpenLab = (labId: LabId) => {
-    pushNav({ page: 'labs', labId, lessonId: null });
+  const handleOpenLab = (labId: LabId, respirationSimId?: RespirationSimId) => {
+    pushNav({ page: 'labs', labId, lessonId: null, respirationSimId });
   };
 
   const handleOpenLesson = (grade: GradeLevel, lessonId: string) => {
@@ -128,7 +130,10 @@ export default function App() {
           {nav.page === 'labs' && (
             <LabsHubPage
               activeLabId={nav.labId}
-              onSelectLab={(labId) => setNav((s) => ({ ...s, labId }))}
+              initialRespirationSimId={nav.respirationSimId}
+              onSelectLab={(labId, simId) =>
+                setNav((s) => ({ ...s, labId, respirationSimId: simId }))
+              }
             />
           )}
 
@@ -141,7 +146,11 @@ export default function App() {
           )}
 
           {nav.page === 'guide' && (
-            <GuidePage onOpenLab={handleOpenLab} onNavigatePage={handleNavigatePage} />
+            <GuidePage
+              onOpenLab={handleOpenLab}
+              onNavigatePage={handleNavigatePage}
+              onOpenLesson={handleOpenLesson}
+            />
           )}
 
           {nav.page === 'offline' && <OfflinePage />}

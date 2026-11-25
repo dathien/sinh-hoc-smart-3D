@@ -28,7 +28,8 @@ export type LabId =
   | 'genetics'
   | 'evolution'
   | 'ecology'
-  | 'experiments';
+  | 'experiments'
+  | 'respiration';
 
 export interface ScientificSourceMeta {
   name: string;

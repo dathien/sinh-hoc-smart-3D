@@ -1,10 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, Database, Download, HardDrive, Trash2 } from 'lucide-react';
+import { CheckCircle2, Database, Download, HardDrive, RefreshCw, Trash2 } from 'lucide-react';
 import { CURRICULUM_LESSONS } from '../../data/curriculum/lessons';
 import { FORMULA_LIBRARY } from '../../data/formulas/formulaLibrary';
 import { LAB_DEFINITIONS } from '../../data/labsMeta';
+import {
+  ANIMAL_MATCHING_ITEMS,
+  GAS_EXCHANGE_COMPARISON_ROWS,
+  HUMAN_VS_BIRD_COMPARISON,
+  RESPIRATION_SIMULATIONS,
+} from '../../data/respiration/respirationContent';
+import { RESPIRATION_QUESTION_BANK } from '../../data/respiration/respirationQuestions';
 import { storageService } from '../../services/storage/indexedDb';
 import { OfflinePackageInfo } from '../../types/biology';
+
+const RESPIRATION_OFFLINE_PAYLOAD = {
+  packageName: 'Sinh học 11 – Hô hấp ở động vật',
+  version: '2.0',
+  simulations: RESPIRATION_SIMULATIONS,
+  comparisonRows: GAS_EXCHANGE_COMPARISON_ROWS,
+  animalMatching: ANIMAL_MATCHING_ITEMS,
+  humanVsBird: HUMAN_VS_BIRD_COMPARISON,
+  questionBank: RESPIRATION_QUESTION_BANK,
+};
+
+const RESPIRATION_PAYLOAD_KB = Math.max(
+  1,
+  Math.round(new TextEncoder().encode(JSON.stringify(RESPIRATION_OFFLINE_PAYLOAD)).length / 1024),
+);
 
 const BASE_PACKAGES: Omit<OfflinePackageInfo, 'status' | 'progress'>[] = [
   { id: 'pkg-curriculum-10', title: 'Gói 01 · Bài học & Thuật ngữ Sinh học 10', description: 'Tế bào, Sinh học phân tử cơ bản, Phân bào, Vi sinh vật & Virus.', estimatedSizeKB: 420 },
@@ -21,6 +43,12 @@ const BASE_PACKAGES: Omit<OfflinePackageInfo, 'status' | 'progress'>[] = [
   { id: 'pkg-genetics-evo', title: 'Gói 12 · Dữ liệu Lab 09 & 10 – Di truyền & Tiến hóa', description: 'Bảng Punnett, Hardy–Weinberg, Mô phỏng quần thể có seed.', estimatedSizeKB: 280 },
   { id: 'pkg-ecology', title: 'Gói 13 · Dữ liệu Lab 11 – Sinh thái học 3D', description: '5 hệ sinh thái, Tháp năng lượng và Chu trình vật chất.', estimatedSizeKB: 300 },
   { id: 'pkg-wetlab', title: 'Gói 14 · Dữ liệu Lab 12 – 7 Thí nghiệm Thực hành Ảo', description: 'Quy trình chuẩn Lugol, Biuret, Benedict, Amylase, Co nguyên sinh.', estimatedSizeKB: 320 },
+  {
+    id: 'pkg-bio11-respiration',
+    title: 'Gói 15 · Sinh học 11 – Hô hấp ở động vật (Bài 9 · 8 Mô phỏng 3D)',
+    description: 'Toàn bộ cấu hình 8 mô phỏng 3D hô hấp, 13 chú thích giải phẫu, bảng so sánh 4 cơ chế, ghép loài và ngân hàng 48 câu hỏi kèm đáp án.',
+    estimatedSizeKB: RESPIRATION_PAYLOAD_KB,
+  },
 ];
 
 export const OfflineManager: React.FC = () => {
@@ -60,6 +88,13 @@ export const OfflineManager: React.FC = () => {
     if (pkgId === 'pkg-curriculum-11') return CURRICULUM_LESSONS.filter((l) => l.grade === 11);
     if (pkgId === 'pkg-curriculum-12') return CURRICULUM_LESSONS.filter((l) => l.grade === 12);
     if (pkgId === 'pkg-formulas') return FORMULA_LIBRARY;
+    if (pkgId === 'pkg-bio11-respiration') {
+      return {
+        ...RESPIRATION_OFFLINE_PAYLOAD,
+        lesson: CURRICULUM_LESSONS.find((l) => l.id === 'bio11-respiration') ?? null,
+        cachedAt: new Date().toISOString(),
+      };
+    }
     return { labs: LAB_DEFINITIONS, cachedAt: new Date().toISOString() };
   };
 
@@ -128,11 +163,11 @@ export const OfflineManager: React.FC = () => {
           <p className="text-slate-600 text-ui-body">
             Tải trước bài học, công thức và dữ liệu thí nghiệm vào IndexedDB & Cache Storage để dạy học ngay cả khi phòng học không có Internet.
           </p>
-          <div className="inline-flex items-center gap-2 text-slate-700 font-medium text-ui-min pt-1">
+          <div className="inline-flex flex-wrap items-center gap-2 text-slate-700 font-medium text-ui-min pt-1">
             <HardDrive className="w-4 h-4 text-blue-600" />
             <span>{storageUsageText}</span>
             <span>·</span>
-            <span>Đã sẵn sàng {readyCount}/14 gói dữ liệu</span>
+            <span>Đã sẵn sàng {readyCount}/{packages.length} gói dữ liệu</span>
           </div>
         </div>
 
@@ -142,7 +177,7 @@ export const OfflineManager: React.FC = () => {
           className="min-h-[48px] px-5 py-2.5 rounded-xl bg-teal-700 text-white hover:bg-teal-800 font-semibold inline-flex items-center gap-2 text-ui-button shadow-sm"
         >
           <Download className="w-5 h-5" />
-          Tải toàn bộ 14 gói dùng ngoại tuyến
+          Tải toàn bộ {packages.length} gói dùng ngoại tuyến
         </button>
       </div>
 
@@ -152,7 +187,7 @@ export const OfflineManager: React.FC = () => {
             key={pkg.id}
             className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between gap-3"
           >
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-bold text-slate-900 text-ui-card-title">{pkg.title}</h3>
                 {pkg.status === 'ready' && (
@@ -163,19 +198,36 @@ export const OfflineManager: React.FC = () => {
               </div>
               <p className="text-slate-600 text-ui-min">{pkg.description}</p>
               <div className="text-slate-500 font-mono-tabular text-ui-min">
-                Ước tính: ~{pkg.estimatedSizeKB} KB {pkg.updatedAt ? `· Cập nhật: ${pkg.updatedAt}` : ''}
+                Dung lượng gói: ~{pkg.estimatedSizeKB} KB {pkg.updatedAt ? `· Cập nhật: ${pkg.updatedAt}` : ''}
               </div>
+              {pkg.status === 'downloading' && (
+                <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                  <div
+                    className="bg-teal-600 h-2.5 rounded-full transition-all"
+                    style={{ width: `${pkg.progress}%` }}
+                  />
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-100">
               {pkg.status === 'ready' ? (
-                <button
-                  type="button"
-                  onClick={() => removePackage(pkg.id)}
-                  className="min-h-[44px] px-3.5 py-2 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 inline-flex items-center gap-1.5 text-ui-min font-medium"
-                >
-                  <Trash2 className="w-4 h-4" /> Xóa bộ nhớ đệm
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => downloadPackage(pkg)}
+                    className="min-h-[44px] px-3.5 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 inline-flex items-center gap-1.5 text-ui-min font-medium"
+                  >
+                    <RefreshCw className="w-4 h-4" /> Tải lại
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removePackage(pkg.id)}
+                    className="min-h-[44px] px-3.5 py-2 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 inline-flex items-center gap-1.5 text-ui-min font-medium"
+                  >
+                    <Trash2 className="w-4 h-4" /> Xóa bộ nhớ đệm
+                  </button>
+                </>
               ) : (
                 <button
                   type="button"
@@ -184,7 +236,7 @@ export const OfflineManager: React.FC = () => {
                   className="min-h-[44px] px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 inline-flex items-center gap-1.5 text-ui-min font-semibold"
                 >
                   <Download className="w-4 h-4" />
-                  {pkg.status === 'downloading' ? 'Đang tải...' : 'Tải xuống gói này'}
+                  {pkg.status === 'downloading' ? `Đang tải (${pkg.progress}%)...` : 'Tải xuống gói này'}
                 </button>
               )}
             </div>

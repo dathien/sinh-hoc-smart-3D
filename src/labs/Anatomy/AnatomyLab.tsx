@@ -1,10 +1,11 @@
 import React, { useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { Upload, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Upload, RefreshCw, AlertTriangle, Wind } from 'lucide-react';
 import { ModelViewer3D, SceneUpdateContext } from '../../components/viewer3d/ModelViewer3D';
 import { LabWorkspaceLayout } from '../../components/viewer3d/LabWorkspaceLayout';
 import { useLabViewerState } from '../../hooks/useLabViewerState';
+import { RespirationSimId } from '../../data/respiration/respirationTypes';
 import { ModelPartInfo, QualityLevel, ScientificSourceMeta } from '../../types/biology';
 
 type AnatomyMode = 'heart' | 'lung' | 'custom-glb';
@@ -158,7 +159,8 @@ const LUNG_PARTS: ModelPartInfo[] = [
 export const AnatomyLab: React.FC<{
   isPresentation?: boolean;
   onTogglePresentation?: () => void;
-}> = ({ isPresentation, onTogglePresentation }) => {
+  onOpenRespiration?: (simId?: RespirationSimId) => void;
+}> = ({ isPresentation, onTogglePresentation, onOpenRespiration }) => {
   const viewer = useLabViewerState(true);
   const [mode, setMode] = useState<AnatomyMode>('heart');
   const [heartRate, setHeartRate] = useState(72); // 40 - 150 bpm
@@ -932,6 +934,21 @@ export const AnatomyLab: React.FC<{
                 />
                 <span>Hiện dòng khí O₂ (xanh lam) & CO₂ (vàng)</span>
               </label>
+              {onOpenRespiration && (
+                <div className="p-3 rounded-xl bg-teal-50 border border-teal-200 space-y-2">
+                  <p className="text-teal-950 text-[15px] font-medium">
+                    Muốn dạy chuyên sâu Bài 9 với đủ 13 thành phần giải phẫu (phổi phải 3 thùy – phổi trái 2 thùy), biểu đồ áp suất và 8 mô phỏng so sánh động vật?
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => onOpenRespiration('human-anatomy')}
+                    className="w-full min-h-[44px] px-3.5 py-2 rounded-lg bg-teal-700 text-white hover:bg-teal-800 font-semibold inline-flex items-center justify-center gap-2 text-[15px]"
+                  >
+                    <Wind className="w-4 h-4" />
+                    Mở Hệ thống 8 Mô phỏng Hô hấp 3D (Lab 13)
+                  </button>
+                </div>
+              )}
             </div>
           ) : null
         }

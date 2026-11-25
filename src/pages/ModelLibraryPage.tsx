@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowRight, Box, Search } from 'lucide-react';
 import { LAB_DEFINITIONS } from '../data/labsMeta';
+import { RespirationSimId } from '../data/respiration/respirationTypes';
 import { GradeLevel, LabId } from '../types/biology';
 import { matchesSearchQuery } from '../utils/vietnameseSearch';
 
@@ -13,6 +14,7 @@ interface ModelCatalogItem {
   dataType: string;
   description: string;
   labId: LabId;
+  simId?: RespirationSimId;
 }
 
 const MODEL_CATALOG: ModelCatalogItem[] = [
@@ -29,7 +31,15 @@ const MODEL_CATALOG: ModelCatalogItem[] = [
   { id: 'm-1a3n', name: 'Hemoglobin gắn O₂ (PDB 1A3N)', englishName: 'Human Hemoglobin', grade: 11, category: 'Phân tử sinh học thực', dataType: 'Mô hình dữ liệu khoa học thực', description: 'Cấu trúc bậc 4 gồm 4 chuỗi polypeptide và 4 nhân Heme.', labId: 'molecular-viewer' },
   { id: 'm-af-hb', name: 'Alpha-Hemoglobin dự đoán (AlphaFold P69905)', englishName: 'AlphaFold Prediction', grade: 12, category: 'Phân tử sinh học dự đoán', dataType: 'Mô hình khoa học dự đoán', description: 'Mô hình dự đoán AI kèm thang tin cậy pLDDT từng amino acid.', labId: 'molecular-viewer' },
   { id: 'm-heart', name: 'Tim người & Chu kì tim', englishName: 'Human Heart & Cardiac Cycle', grade: 11, category: 'Giải phẫu & Sinh lí người', dataType: 'Mô hình giản lược sư phạm', description: '4 ngăn tim, van nhĩ thất, van bán nguyệt, điều chỉnh nhịp 40–150 lần/phút.', labId: 'anatomy' },
-  { id: 'm-lung', name: 'Phổi – Khí quản – Cơ hoành', englishName: 'Lungs & Diaphragm', grade: 11, category: 'Giải phẫu & Sinh lí người', dataType: 'Mô hình giản lược sư phạm', description: 'Mô phỏng nhịp hít vào – thở ra và trao đổi khí O₂ – CO₂.', labId: 'anatomy' },
+  { id: 'm-lung', name: 'Phổi – Khí quản – Cơ hoành (Giải phẫu nhanh)', englishName: 'Lungs & Diaphragm', grade: 11, category: 'Giải phẫu & Sinh lí người', dataType: 'Mô hình giản lược sư phạm', description: 'Mô phỏng nhịp hít vào – thở ra và trao đổi khí O₂ – CO₂ trong Lab Giải phẫu.', labId: 'anatomy' },
+  { id: 'm-resp-01', name: 'Hệ hô hấp người 13 thành phần (Bài 9)', englishName: 'Human Respiratory Anatomy (13 Parts)', grade: 11, category: 'Hô hấp ở động vật', dataType: 'Mô hình giản lược sư phạm', description: 'Khoang mũi, hầu, thanh quản, khí quản, phế quản, tiểu phế quản, phổi phải 3 thùy, phổi trái 2 thùy, phế nang, màng phổi, cơ hoành, lồng ngực, cơ liên sườn.', labId: 'respiration', simId: 'human-anatomy' },
+  { id: 'm-resp-02', name: 'Cơ chế hít vào & thở ra + Biểu đồ động', englishName: 'Breathing Mechanics & Pressure Graph', grade: 11, category: 'Hô hấp ở động vật', dataType: 'Mô phỏng định lượng', description: 'Đồng bộ cơ hoành, cơ liên sườn ngoài, xương sườn, thể tích phổi và áp suất phế nang (nhịp thở 8–40 lần/phút).', labId: 'respiration', simId: 'breathing-mechanics' },
+  { id: 'm-resp-03', name: 'Trao đổi khí tại Phế nang – Mao mạch', englishName: 'Alveolar Gas Exchange 3D', grade: 11, category: 'Hô hấp ở động vật', dataType: 'Mô phỏng định tính', description: 'Phóng đại phế nang, hàng rào trao đổi khí, hồng cầu đổi màu đỏ sẫm → đỏ sáng, khuếch tán O₂/CO₂.', labId: 'respiration', simId: 'alveolar-exchange' },
+  { id: 'm-resp-04', name: 'Trao đổi khí qua bề mặt cơ thể (Giun đất & Thủy tức)', englishName: 'Body Surface Gas Exchange', grade: 11, category: 'Hô hấp ở động vật', dataType: 'Mô hình giản lược sư phạm', description: 'So sánh da ẩm có mao mạch dưới da ở giun đất (chỉnh độ ẩm) và khuếch tán trực tiếp không hệ tuần hoàn ở thủy tức.', labId: 'respiration', simId: 'body-surface' },
+  { id: 'm-resp-05', name: 'Hệ thống ống khí ở Châu chấu', englishName: 'Insect Tracheal System 3D', grade: 11, category: 'Hô hấp ở động vật', dataType: 'Mô hình giản lược sư phạm', description: 'Lỗ thở đóng mở, ống khí và phóng đại ống khí nhỏ đưa O₂ trực tiếp tới từng tế bào cơ.', labId: 'respiration', simId: 'tracheal-system' },
+  { id: 'm-resp-06', name: 'Mang cá xương & Dòng chảy ngược chiều', englishName: 'Fish Gills & Countercurrent Exchange', grade: 11, category: 'Hô hấp ở động vật', dataType: 'Mô phỏng định lượng', description: 'Hoạt động miệng – nắp mang, 4 cung mang, phóng đại phiến mang so sánh ngược chiều vs cùng chiều.', labId: 'respiration', simId: 'fish-gills' },
+  { id: 'm-resp-07', name: 'Hệ hô hấp ở Chim (Phổi ống khí & Túi khí)', englishName: 'Avian Unidirectional Respiration', grade: 11, category: 'Hô hấp ở động vật', dataType: 'Mô hình giản lược sư phạm', description: 'Theo dõi gói khí đi một chiều qua phổi không phồng xẹp trong 2 chu kỳ hô hấp (4 giai đoạn) nhờ túi khí trước – sau.', labId: 'respiration', simId: 'avian-respiration' },
+  { id: 'm-resp-08', name: 'Bảo vệ sức khỏe hô hấp (Lông chuyển – Chất nhầy)', englishName: 'Mucociliary Airway Clearance', grade: 11, category: 'Hô hấp ở động vật', dataType: 'Mô phỏng định tính', description: '4 tình huống sư phạm: Đường thở khỏe mạnh, khói thuốc lá, bụi ô nhiễm không khí và luyện tập thể dục.', labId: 'respiration', simId: 'respiratory-health' },
   { id: 'm-mitosis', name: 'Chu trình Phân bào (Nguyên phân & Giảm phân)', englishName: 'Mitosis & Meiosis 3D', grade: 10, category: 'Phân bào', dataType: 'Mô hình giản lược sư phạm', description: 'Theo dõi NST đơn/kép và trao đổi chéo cho bộ 2n = 2, 4, 6, 8.', labId: 'cell-division' },
   { id: 'm-plant-c4', name: 'Quang hợp C3 – C4 – CAM & Mạch dẫn', englishName: 'Plant Physiology 3D', grade: 11, category: 'Sinh lí Thực vật', dataType: 'Mô hình giản lược sư phạm', description: 'Rễ, mạch gỗ, mạch rây, khí khổng, mô giậu và bao bó mạch.', labId: 'plant-physiology' },
   { id: 'm-nephron', name: 'Đơn vị thận (Nephron) & Synapse', englishName: 'Nephron & Chemical Synapse', grade: 11, category: 'Sinh lí Động vật', dataType: 'Mô hình giản lược sư phạm', description: 'Lọc cầu thận, tái hấp thụ ống thận và truyền xung qua khe synapse.', labId: 'animal-physiology' },
@@ -37,7 +47,7 @@ const MODEL_CATALOG: ModelCatalogItem[] = [
 ];
 
 interface ModelLibraryPageProps {
-  onOpenLab: (labId: LabId) => void;
+  onOpenLab: (labId: LabId, simId?: RespirationSimId) => void;
 }
 
 export const ModelLibraryPage: React.FC<ModelLibraryPageProps> = ({ onOpenLab }) => {
@@ -59,7 +69,7 @@ export const ModelLibraryPage: React.FC<ModelLibraryPageProps> = ({ onOpenLab })
           <div>
             <h1 className="font-bold text-slate-900 text-ui-page">Thư viện Mô hình Sinh học 3D</h1>
             <p className="text-slate-600 text-ui-body">
-              Tra cứu nhanh toàn bộ mô hình cấu trúc giải phẫu, tế bào, virus, phân tử thực PDB/AlphaFold và hệ sinh thái.
+              Tra cứu nhanh toàn bộ mô hình cấu trúc giải phẫu, hô hấp ở động vật, tế bào, virus, phân tử thực PDB/AlphaFold và hệ sinh thái.
             </p>
           </div>
           <div className="text-slate-600 font-medium text-ui-min">
@@ -74,7 +84,7 @@ export const ModelLibraryPage: React.FC<ModelLibraryPageProps> = ({ onOpenLab })
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Lọc theo tên mô hình (vd: ti the, virus, hemoglobin, 1BNA)..."
+              placeholder="Lọc theo tên mô hình (vd: phổi, mang cá, ống khí, túi khí, giun đất, ti the, 1BNA)..."
               className="w-full min-h-[46px] pl-11 pr-4 rounded-xl border border-slate-300 bg-white text-slate-900 text-ui-body"
             />
           </div>
@@ -122,7 +132,7 @@ export const ModelLibraryPage: React.FC<ModelLibraryPageProps> = ({ onOpenLab })
 
               <button
                 type="button"
-                onClick={() => onOpenLab(item.labId)}
+                onClick={() => onOpenLab(item.labId, item.simId)}
                 className="min-h-[44px] w-full px-4 py-2.5 rounded-xl bg-teal-700 text-white hover:bg-teal-800 font-semibold inline-flex items-center justify-center gap-2 text-ui-min"
               >
                 Mở trong {labMeta?.number ?? 'Phòng Lab'}

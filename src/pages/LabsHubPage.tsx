@@ -12,19 +12,30 @@ import { GeneticsLab } from '../labs/Genetics/GeneticsLab';
 import { MolecularBiologyLab } from '../labs/MolecularBiology/MolecularBiologyLab';
 import { MolecularViewerLab } from '../labs/MolecularViewer/MolecularViewerLab';
 import { PlantPhysiologyLab } from '../labs/PlantPhysiology/PlantPhysiologyLab';
+import { RespirationSystemLab } from '../labs/Respiration/RespirationSystemLab';
 import { VirusLab } from '../labs/Virus/VirusLab';
+import { RespirationSimId } from '../data/respiration/respirationTypes';
 import { LabId } from '../types/biology';
 
 interface LabsHubPageProps {
   activeLabId: LabId;
-  onSelectLab: (labId: LabId) => void;
+  initialRespirationSimId?: RespirationSimId;
+  onSelectLab: (labId: LabId, simId?: RespirationSimId) => void;
 }
 
-export const LabsHubPage: React.FC<LabsHubPageProps> = ({ activeLabId, onSelectLab }) => {
+export const LabsHubPage: React.FC<LabsHubPageProps> = ({
+  activeLabId,
+  initialRespirationSimId,
+  onSelectLab,
+}) => {
   const renderLab = () => {
     switch (activeLabId) {
       case 'anatomy':
-        return <AnatomyLab />;
+        return (
+          <AnatomyLab
+            onOpenRespiration={(simId) => onSelectLab('respiration', simId)}
+          />
+        );
       case 'cell':
         return <CellLab />;
       case 'virus':
@@ -47,6 +58,8 @@ export const LabsHubPage: React.FC<LabsHubPageProps> = ({ activeLabId, onSelectL
         return <EcologyLab />;
       case 'experiments':
         return <ExperimentsLab />;
+      case 'respiration':
+        return <RespirationSystemLab initialSimId={initialRespirationSimId} />;
       default:
         return <CellLab />;
     }
@@ -54,11 +67,11 @@ export const LabsHubPage: React.FC<LabsHubPageProps> = ({ activeLabId, onSelectL
 
   return (
     <div className="space-y-5">
-      {/* Switcher across all 12 Labs */}
+      {/* Switcher across all 13 Labs */}
       <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="font-bold text-slate-900 text-ui-page">Phòng Thí nghiệm Sinh học 3D</h1>
-          <span className="text-slate-600 text-ui-min">Chọn một trong 12 phòng Lab tương tác</span>
+          <span className="text-slate-600 text-ui-min">Chọn một trong {LAB_DEFINITIONS.length} phòng Lab tương tác</span>
         </div>
         <div className="flex flex-wrap gap-2">
           {LAB_DEFINITIONS.map((lab) => {

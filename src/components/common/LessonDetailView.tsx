@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { BookOpen, CheckCircle2, Eye, EyeOff, FlaskConical, Printer } from 'lucide-react';
+import { BookOpen, CheckCircle2, Eye, EyeOff, FlaskConical, Printer, Wind } from 'lucide-react';
 import { LabId, LessonData } from '../../types/biology';
 import { BiologyFormulaEditor } from '../mathlive/BiologyFormulaEditor';
+import { RespirationSystemLab } from '../../labs/Respiration/RespirationSystemLab';
+import { GasExchangeComparisonPanel } from '../../labs/Respiration/GasExchangeComparisonPanel';
+import { RespirationQuizBank } from '../../labs/Respiration/RespirationQuizBank';
 
 type LessonTab = 'explore' | 'knowledge' | 'model3d' | 'simulate' | 'practice' | 'remember' | 'questions';
 
@@ -16,14 +19,16 @@ export const LessonDetailView: React.FC<LessonDetailViewProps> = ({ lesson, onOp
   const [revealedAnswers, setRevealedAnswers] = useState<Record<string, boolean>>({});
   const [customFormulas, setCustomFormulas] = useState<Record<number, string>>({});
 
+  const isRespirationLesson = lesson.id === 'bio11-respiration';
+
   const tabs: { id: LessonTab; label: string }[] = [
     { id: 'explore', label: 'Khám phá' },
     { id: 'knowledge', label: 'Kiến thức' },
-    { id: 'model3d', label: 'Mô hình 3D' },
-    { id: 'simulate', label: 'Mô phỏng' },
+    { id: 'model3d', label: isRespirationLesson ? '8 Mô phỏng 3D' : 'Mô hình 3D' },
+    { id: 'simulate', label: isRespirationLesson ? 'So sánh & Ghép loài' : 'Mô phỏng' },
     { id: 'practice', label: 'Thực hành' },
     { id: 'remember', label: 'Ghi nhớ' },
-    { id: 'questions', label: 'Câu hỏi củng cố' },
+    { id: 'questions', label: isRespirationLesson ? 'Luyện tập (48 câu)' : 'Câu hỏi củng cố' },
   ];
 
   return (
@@ -91,6 +96,26 @@ export const LessonDetailView: React.FC<LessonDetailViewProps> = ({ lesson, onOp
       <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-5 print-sheet">
         {activeTab === 'explore' && (
           <div className="space-y-4">
+            {isRespirationLesson && (
+              <div className="p-4 rounded-xl bg-teal-50 border border-teal-300 flex flex-wrap items-center justify-between gap-3 no-print">
+                <div className="space-y-0.5">
+                  <div className="font-bold text-teal-950 text-lg flex items-center gap-2">
+                    <Wind className="w-5 h-5 text-teal-700" />
+                    Hệ thống 8 Mô phỏng 3D tương tác Bài 9 đã tích hợp trực tiếp
+                  </div>
+                  <p className="text-teal-900 text-[15px]">
+                    Khám phá ngay hệ hô hấp người 13 phần, cơ chế hít thở + biểu đồ động, phế nang, giun đất – thủy tức, ống khí châu chấu, mang cá ngược chiều, phổi chim 2 chu kỳ và sức khỏe hô hấp.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('model3d')}
+                  className="min-h-[44px] px-4 py-2.5 rounded-xl bg-teal-700 text-white hover:bg-teal-800 font-bold text-[15px]"
+                >
+                  Mở 8 Mô phỏng 3D ngay
+                </button>
+              </div>
+            )}
             <h3 className="font-bold text-slate-900 text-ui-section">Mục tiêu cần đạt</h3>
             <ul className="space-y-2">
               {lesson.objectives.map((obj, idx) => (
@@ -148,26 +173,53 @@ export const LessonDetailView: React.FC<LessonDetailViewProps> = ({ lesson, onOp
           </div>
         )}
 
-        {(activeTab === 'model3d' || activeTab === 'simulate') && (
-          <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 text-center space-y-4">
-            <h3 className="font-bold text-slate-900 text-ui-section">
-              {activeTab === 'model3d'
-                ? 'Khám phá Mô hình 3D tương tác trực tiếp'
-                : 'Chạy Mô phỏng động & Thay đổi thông số'}
-            </h3>
-            <p className="text-slate-700 text-ui-body max-w-2xl mx-auto">
-              Nhấn nút bên dưới để mở Phòng Lab 3D chuyên biệt cho bài học <strong>{lesson.title}</strong> với đầy đủ góc nhìn, cắt lớp, tách cấu trúc và mô phỏng trực quan.
-            </p>
-            <button
-              type="button"
-              onClick={() => onOpenLab(lesson.relatedLabId)}
-              className="min-h-[48px] px-6 py-3 rounded-xl bg-teal-700 text-white hover:bg-teal-800 font-bold inline-flex items-center gap-2 text-ui-button"
-            >
-              <FlaskConical className="w-5 h-5" />
-              Mở Phòng Lab 3D ngay
-            </button>
-          </div>
-        )}
+        {activeTab === 'model3d' &&
+          (isRespirationLesson ? (
+            <RespirationSystemLab embeddedInLesson />
+          ) : (
+            <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 text-center space-y-4">
+              <h3 className="font-bold text-slate-900 text-ui-section">
+                Khám phá Mô hình 3D tương tác trực tiếp
+              </h3>
+              <p className="text-slate-700 text-ui-body max-w-2xl mx-auto">
+                Nhấn nút bên dưới để mở Phòng Lab 3D chuyên biệt cho bài học <strong>{lesson.title}</strong> với đầy đủ góc nhìn, cắt lớp, tách cấu trúc và mô phỏng trực quan.
+              </p>
+              <button
+                type="button"
+                onClick={() => onOpenLab(lesson.relatedLabId)}
+                className="min-h-[48px] px-6 py-3 rounded-xl bg-teal-700 text-white hover:bg-teal-800 font-bold inline-flex items-center gap-2 text-ui-button"
+              >
+                <FlaskConical className="w-5 h-5" />
+                Mở Phòng Lab 3D ngay
+              </button>
+            </div>
+          ))}
+
+        {activeTab === 'simulate' &&
+          (isRespirationLesson ? (
+            <GasExchangeComparisonPanel
+              onOpenSim={() => {
+                setActiveTab('model3d');
+              }}
+            />
+          ) : (
+            <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 text-center space-y-4">
+              <h3 className="font-bold text-slate-900 text-ui-section">
+                Chạy Mô phỏng động & Thay đổi thông số
+              </h3>
+              <p className="text-slate-700 text-ui-body max-w-2xl mx-auto">
+                Nhấn nút bên dưới để mở Phòng Lab 3D chuyên biệt cho bài học <strong>{lesson.title}</strong> với đầy đủ góc nhìn, cắt lớp, tách cấu trúc và mô phỏng trực quan.
+              </p>
+              <button
+                type="button"
+                onClick={() => onOpenLab(lesson.relatedLabId)}
+                className="min-h-[48px] px-6 py-3 rounded-xl bg-teal-700 text-white hover:bg-teal-800 font-bold inline-flex items-center gap-2 text-ui-button"
+              >
+                <FlaskConical className="w-5 h-5" />
+                Mở Phòng Lab 3D ngay
+              </button>
+            </div>
+          ))}
 
         {activeTab === 'practice' && (
           <div className="space-y-4">
@@ -206,42 +258,45 @@ export const LessonDetailView: React.FC<LessonDetailViewProps> = ({ lesson, onOp
         )}
 
         {activeTab === 'questions' && (
-          <div className="space-y-4">
-            <h3 className="font-bold text-slate-900 text-ui-section">Câu hỏi củng cố & Phát triển năng lực</h3>
-            {lesson.questions.map((q, idx) => {
-              const shown = Boolean(revealedAnswers[q.id]);
-              return (
-                <div key={q.id} className="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-bold text-blue-700 text-ui-min">
-                      Câu {idx + 1} · {q.level} · {q.type}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setRevealedAnswers((prev) => ({ ...prev, [q.id]: !prev[q.id] }))
-                      }
-                      className="min-h-[44px] px-3.5 py-1.5 rounded-lg border border-slate-300 bg-slate-50 hover:bg-slate-100 font-medium text-ui-min no-print"
-                    >
-                      {shown ? 'Ẩn gợi ý trả lời' : 'Xem gợi ý trả lời'}
-                    </button>
-                  </div>
-                  <p className="font-semibold text-slate-900 text-ui-body">{q.question}</p>
-                  {shown && (
-                    <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 space-y-1.5 text-emerald-950">
-                      <div>
-                        <strong>Hướng dẫn trả lời:</strong> {q.answer}
-                      </div>
-                      {showTeacherScript && (
-                        <div className="text-emerald-800 text-ui-min">
-                          <strong>Gợi ý giảng dạy (GV):</strong> {q.teacherNote}
-                        </div>
-                      )}
+          <div className="space-y-5">
+            {isRespirationLesson && <RespirationQuizBank simId="all" />}
+            <div className="space-y-4">
+              <h3 className="font-bold text-slate-900 text-ui-section">Câu hỏi củng cố & Phát triển năng lực</h3>
+              {lesson.questions.map((q, idx) => {
+                const shown = Boolean(revealedAnswers[q.id]);
+                return (
+                  <div key={q.id} className="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-bold text-blue-700 text-ui-min">
+                        Câu {idx + 1} · {q.level} · {q.type}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setRevealedAnswers((prev) => ({ ...prev, [q.id]: !prev[q.id] }))
+                        }
+                        className="min-h-[44px] px-3.5 py-1.5 rounded-lg border border-slate-300 bg-slate-50 hover:bg-slate-100 font-medium text-ui-min no-print"
+                      >
+                        {shown ? 'Ẩn gợi ý trả lời' : 'Xem gợi ý trả lời'}
+                      </button>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                    <p className="font-semibold text-slate-900 text-ui-body">{q.question}</p>
+                    {shown && (
+                      <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 space-y-1.5 text-emerald-950">
+                        <div>
+                          <strong>Hướng dẫn trả lời:</strong> {q.answer}
+                        </div>
+                        {showTeacherScript && (
+                          <div className="text-emerald-800 text-ui-min">
+                            <strong>Gợi ý giảng dạy (GV):</strong> {q.teacherNote}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
